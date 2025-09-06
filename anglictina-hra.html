@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hra na procvičování angličtiny</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f9fd;
+    margin: 0; padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .game-container {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 15px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 500px;
+  }
+  h1 {
+    text-align: center;
+    color: #213547;
+    margin-bottom: 20px;
+    font-weight: 700;
+    font-size: 2.2em;
+  }
+  .word {
+    font-size: 2.6em;
+    color: #34495e;
+    text-align: center;
+    margin: 25px 0 25px;
+    word-wrap: break-word;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .option-btn {
+    background: #3498db;
+    border: none;
+    color: white;
+    padding: 15px 0;
+    font-size: 1.25em;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .option-btn:hover,
+  .option-btn:active {
+    background: #2980b9;
+  }
+  .result {
+    margin-top: 25px;
+    font-weight: 700;
+    font-size: 1.3em;
+    color: #27ae60;
+    text-align: center;
+    min-height: 30px;
+  }
+  .scoreboard {
+    margin-top: 25px;
+    font-size: 1.1em;
+    color: #2c3e50;
+    text-align: center;
+  }
+  .category-select {
+    margin-top: 10px;
+    width: 100%;
+    font-size: 1.1em;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  .btn-container {
+    margin-top: 30px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+  }
+  .restart-btn, .continue-btn {
+    background: #e67e22;
+    border: none;
+    color: white;
+    padding: 14px 0;
+    width: 45%;
+    font-size: 1.15em;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .restart-btn:hover, .continue-btn:hover,
+  .restart-btn:active, .continue-btn:active {
+    background: #d35400;
+  }
+
+  /* Responsivní úpravy na malé mobily */
+  @media (max-width: 360px) {
+    h1 {
+      font-size: 1.8em;
+    }
+    .word {
+      font-size: 2em;
+    }
+    .option-btn {
+      font-size: 1.1em;
+      padding: 12px 8px;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="game-container" role="main" aria-label="Angličtina procvičovací hra">
+    <h1>Procvičuj angličtinu</h1>
+    <label for="categorySelect" class="visually-hidden">Vyberte kategorii slovíček</label>
+    <select id="categorySelect" class="category-select" aria-label="Kategorie slovíček">
+      <option value="all">Všechny kategorie</option>
+      <option value="zvirata">Zvířata</option>
+      <option value="ovoce">Ovoce</option>
+      <option value="povolani">Povolání</option>
+      <option value="barvy">Barvy</option>
+      <option value="domov">Domov a věci</option>
+      <option value="sport">Sport</option>
+      <option value="jidlo">Jídlo a pití</option>
+      <option value="mesto">Město a doprava</option>
+    </select>
+    <div class="word" id="englishWord" aria-live="polite" aria-atomic="true">Načítám...</div>
+    <div class="options" id="options" role="list"></div>
+    <div class="result" id="result" aria-live="polite" aria-atomic="true"></div>
+    <div class="scoreboard" id="scoreboard" aria-live="polite">Skóre: 0 | Otázky: 0 / 100</div>
+    <div class="btn-container" style="display:none;">
+      <button id="restartBtn" class="restart-btn">Začít znovu</button>
+      <button id="continueBtn" class="continue-btn">Pokračovat</button>
+    </div>
+  </main>
+
+<script>
+  const allWords = {
+    zvirata: [
+      { en: "dog", cz: "pes" }, { en: "cat", cz: "kočka" }, { en: "horse", cz: "kůň" },
+      { en: "cow", cz: "kráva" }, { en: "bird", cz: "pták" }, { en: "fish", cz: "ryba" },
+      { en: "rabbit", cz: "králík" }, { en: "sheep", cz: "ovce" }, { en: "lion", cz: "lev" },
+      { en: "elephant", cz: "slon" }, { en: "tiger", cz: "tygr" }, { en: "bear", cz: "medvěd" },
+      { en: "wolf", cz: "vlk" }, { en: "fox", cz: "lišák" }, { en: "monkey", cz: "opice" },
+      { en: "duck", cz: "kachna" }, { en: "goat", cz: "koza" }, { en: "mouse", cz: "myš" },
+      { en: "owl", cz: "sova" }
+    ],
+    ovoce: [
+      { en: "apple", cz: "jablko" }, { en: "banana", cz: "banán" }, { en: "orange", cz: "pomeranč" },
+      { en: "strawberry", cz: "jahoda" }, { en: "grape", cz: "hrozen" }, { en: "lemon", cz: "citron" },
+      { en: "watermelon", cz: "meloun" }, { en: "pear", cz: "hruška" }, { en: "pineapple", cz: "ananas" },
+      { en: "cherry", cz: "třešeň" }, { en: "mango", cz: "mango" }, { en: "blueberry", cz: "borůvka" },
+      { en: "raspberry", cz: "malina" }, { en: "kiwi", cz: "kiwi" }, { en: "melon", cz: "meloun" },
+      { en: "coconut", cz: "kokosový ořech" }, { en: "papaya", cz: "papája" }, { en: "fig", cz: "fík" },
+      { en: "pomegranate", cz: "granátové jablko" }, { en: "lime", cz: "limetka" }
+    ],
+    povolani: [
+      { en: "doctor", cz: "lékař" }, { en: "teacher", cz: "učitel" }, { en: "engineer", cz: "inženýr" },
+      { en: "pilot", cz: "pilot" }, { en: "chef", cz: "kuchař" }, { en: "driver", cz: "řidič" },
+      { en: "police officer", cz: "policista" }, { en: "firefighter", cz: "hasič" }, { en: "nurse", cz: "zdravotní sestra" },
+      { en: "lawyer", cz: "právník" }, { en: "mechanic", cz: "mechanik" }, { en: "artist", cz: "umělec" },
+      { en: "musician", cz: "hudebník" }, { en: "writer", cz: "spisovatel" }, { en: "dentist", cz: "zubař" },
+      { en: "accountant", cz: "účetní" }, { en: "engineer", cz: "technik" }, { en: "receptionist", cz: "recepční" },
+      { en: "scientist", cz: "vědec" }, { en: "photographer", cz: "fotograf" }
+    ],
+    barvy: [
+      { en: "red", cz: "červená" }, { en: "blue", cz: "modrá" }, { en: "green", cz: "zelená" }, { en: "yellow", cz: "žlutá" },
+      { en: "black", cz: "černá" }, { en: "white", cz: "bílá" }, { en: "orange", cz: "oranžová" }, { en: "purple", cz: "fialová" },
+      { en: "pink", cz: "růžová" }, { en: "brown", cz: "hnědá" }, { en: "gray", cz: "šedá" }, { en: "violet", cz: "fialová" },
+      { en: "turquoise", cz: "tyrkysová" }, { en: "beige", cz: "béžová" }
+    ],
+    domov: [
+      { en: "house", cz: "dům" }, { en: "door", cz: "dveře" }, { en: "window", cz: "okno" }, { en: "table", cz: "stůl" },
+      { en: "chair", cz: "židle" }, { en: "bed", cz: "postel" }, { en: "lamp", cz: "lampa" }, { en: "floor", cz: "podlaha" },
+      { en: "ceiling", cz: "strop" }, { en: "wall", cz: "zeď" }, { en: "stair", cz: "schod" }, { en: "couch", cz: "pohovka" },
+      { en: "cupboard", cz: "skříň" }, { en: "fridge", cz: "lednice" }, { en: "sink", cz: "dřez" }
+    ],
+    sport: [
+      { en: "football", cz: "fotbal" }, { en: "basketball", cz: "basketbal" }, { en: "tennis", cz: "tenis" },
+      { en: "swimming", cz: "plavání" }, { en: "running", cz: "běhání" }, { en: "cycling", cz: "cyklistika" },
+      { en: "skiing", cz: "lyžování" }, { en: "volleyball", cz: "volejbal" }, { en: "boxing", cz: "box" },
+      { en: "golf", cz: "golf" }, { en: "hockey", cz: "hokej" }, { en: "surfing", cz: "surfování" },
+      { en: "yoga", cz: "jóga" }, { en: "baseball", cz: "baseball" }, { en: "gymnastics", cz: "gymnastika" }
+    ],
+    jidlo: [
+      { en: "bread", cz: "chléb" }, { en: "milk", cz: "mléko" }, { en: "cheese", cz: "sýr" }, { en: "meat", cz: "maso" },
+      { en: "egg", cz: "vejce" }, { en: "rice", cz: "rýže" }, { en: "butter", cz: "máslo" }, { en: "soup", cz: "polévka" },
+      { en: "tea", cz: "čaj" }, { en: "coffee", cz: "káva" }, { en: "salad", cz: "salát" }, { en: "fish", cz: "ryba" },
+      { en: "chicken", cz: "kuře" }, { en: "apple", cz: "jablko" }, { en: "cake", cz: "dort" }, { en: "cookie", cz: "sušenka" },
+      { en: "juice", cz: "džus" }
+    ],
+    mesto: [
+      { en: "street", cz: "ulice" }, { en: "car", cz: "auto" }, { en: "bus", cz: "autobus" }, { en: "train", cz: "vlak" },
+      { en: "bicycle", cz: "kolo" }, { en: "taxi", cz: "taxi" }, { en: "traffic light", cz: "semafor" }, { en: "bridge", cz: "most" },
+      { en: "park", cz: "park" }, { en: "building", cz: "budova" }, { en: "square", cz: "náměstí" }, { en: "restaurant", cz: "restaurace" },
+      { en: "station", cz: "nádraží" }, { en: "airport", cz: "letiště" }, { en: "hotel", cz: "hotel" }
+    ]
+  };
+
+  const maxQuestions = 100;
+  let selectedCategory = 'all';
+  let wordList = [];
+  let currentQuestion = 0;
+  let score = 0;
+
+  const englishWordEl = document.getElementById('englishWord');
+  const optionsEl = document.getElementById('options');
+  const resultEl = document.getElementById('result');
+  const scoreboardEl = document.getElementById('scoreboard');
+  const categorySelectEl = document.getElementById('categorySelect');
+  const restartBtn = document.getElementById('restartBtn');
+  const continueBtn = document.getElementById('continueBtn');
+  const btnContainer = document.querySelector('.btn-container');
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  // Funkce najde kategorii daného slova
+  function findCategoryOfWord(word) {
+    for (const [category, words] of Object.entries(allWords)) {
+      if (words.some(w => w.en === word.en && w.cz === word.cz)) {
+        return category;
+      }
+    }
+    return null;
+  }
+
+  function getAllWords() {
+    let all = [];
+    Object.values(allWords).forEach(cat => all = all.concat(cat));
+    return all;
+  }
+
+  function prepareGame() {
+    resultEl.textContent = '';
+    score = 0;
+    currentQuestion = 0;
+    if (selectedCategory === 'all') {
+      wordList = getAllWords();
+    } else {
+      wordList = allWords[selectedCategory] ? [...allWords[selectedCategory]] : [];
+    }
+    shuffle(wordList);
+    wordList = wordList.slice(0, Math.min(maxQuestions, wordList.length));
+    updateScore();
+    restartBtn.style.display = 'none';
+    continueBtn.style.display = 'none';
+    btnContainer.style.display = 'none';
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    if (currentQuestion >= wordList.length) {
+      showEndOptions();
+      return;
+    }
+    resultEl.textContent = '';
+    let word = wordList[currentQuestion];
+    englishWordEl.textContent = word.en;
+
+    let cat = findCategoryOfWord(word);
+    let sameCategoryWords = cat ? allWords[cat] : wordList;
+
+    let wrongOptions = sameCategoryWords
+      .filter(w => w.cz !== word.cz)
+      .map(w => w.cz);
+
+    shuffle(wrongOptions);
+    wrongOptions = wrongOptions.slice(0, 3);
+    let options = [...wrongOptions, word.cz];
+    shuffle(options);
+
+    optionsEl.innerHTML = '';
+    options.forEach(opt => {
+      let btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.className = 'option-btn';
+      btn.onclick = () => checkAnswer(opt);
+      optionsEl.appendChild(btn);
+    });
+
+    updateScore();
+  }
+
+  function checkAnswer(selected) {
+    let word = wordList[currentQuestion];
+    if (selected === word.cz) {
+      score++;
+      resultEl.style.color = '#27ae60';
+      resultEl.textContent = 'Správně! 😊';
+    } else {
+      resultEl.style.color = '#c0392b';
+      resultEl.textContent = `Špatně! Správná odpověď je: ${word.cz}`;
+    }
+    currentQuestion++;
+    updateScore();
+
+    disableButtons(true);
+
+    if (currentQuestion < wordList.length) {
+      setTimeout(() => {
+        disableButtons(false);
+        loadQuestion();
+      }, 1800);
+    } else {
+      setTimeout(() => {
+        showEndOptions();
+      }, 2000);
+    }
+  }
+
+  function disableButtons(disable) {
+    const buttons = optionsEl.querySelectorAll('button');
+    buttons.forEach(btn => btn.disabled = disable);
+  }
+
+  function updateScore() {
+    scoreboardEl.textContent = `Skóre: ${score} | Otázky: ${currentQuestion} / ${wordList.length}`;
+  }
+
+  function showEndOptions() {
+    englishWordEl.textContent = 'Konec hry!';
+    optionsEl.innerHTML = '';
+    resultEl.style.color = '#2980b9';
+    resultEl.textContent = `Vaše konečné skóre: ${score} z ${wordList.length}`;
+    btnContainer.style.display = 'flex';
+    restartBtn.style.display = 'inline-block';
+    continueBtn.style.display = 'inline-block';
+  }
+
+  categorySelectEl.addEventListener('change', (e) => {
+    selectedCategory = e.target.value;
+    prepareGame();
+  });
+
+  restartBtn.addEventListener('click', () => {
+    prepareGame();
+  });
+
+  continueBtn.addEventListener('click', () => {
+    prepareGame();
+  });
+
+  // Start hry
+  prepareGame();
+</script>
+</body>
+</html>
